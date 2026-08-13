@@ -1,14 +1,25 @@
 Universal Video Downloader - Windows Companion
 ==============================================
 
-This repository contains the Windows companion required by the Universal Video
-Downloader Firefox add-on. The Firefox extension itself is distributed through
-addons.mozilla.org.
+This is the Windows companion for Quest79's Universal Video Downloader Firefox
+add-on. It is not the Firefox add-on itself.
 
-INSTALL
--------
+The Firefox add-on provides the right-click video scan and download controls.
+This companion lets the add-on use yt-dlp and FFmpeg on the computer to find
+available video qualities, download streams, and merge separate video and audio.
 
-1. Download the companion ZIP from:
+FIREFOX ADD-ON
+--------------
+
+The Firefox add-on has not been published on addons.mozilla.org yet. Its Mozilla
+listing link will be added here after Mozilla approves and publishes it.
+
+Both the Firefox add-on and this Windows companion are required.
+
+INSTALL THE WINDOWS COMPANION
+-----------------------------
+
+1. Download the latest companion ZIP:
    https://github.com/Quest79/UniversalVideoDownloader/releases/latest
 2. Extract the ZIP.
 3. Run INSTALL_HELPER.bat.
