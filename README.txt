@@ -1,61 +1,116 @@
 Universal Video Downloader v4.4
+================================
 
-IMPORTANT: Run INSTALL_HELPER.bat once before loading the extension.
-The v4.4 extension intentionally uses a new native-host name so it cannot accidentally talk to an older incompatible helper.
+A Firefox 142+ extension for Windows that downloads user-selected online video
+through a local yt-dlp and FFmpeg companion.
 
-UNIVERSAL VIDEO DOWNLOADER v4.4 - FIREFOX 142+ / WINDOWS
-===================================================
+FOR USERS
+---------
 
-ARCHITECTURE
-Firefox extension -> one-shot Native Messaging helper -> yt-dlp/FFmpeg -> Windows Downloads
+1. Install the signed Firefox extension from addons.mozilla.org when its listing
+   is available.
+2. Download the Windows companion ZIP from:
+   https://github.com/Quest79/UniversalVideoDownloader/releases/latest
+3. Extract the ZIP and run INSTALL_HELPER.bat once.
 
-This avoids saving browser blob URLs, byte-range fragments, HLS/DASH manifests, or video-only tracks as if they were finished files.
+The installer requires no administrator rights. It installs the native helper,
+yt-dlp, FFmpeg, ffprobe, and Deno under:
 
-INSTALL / UPGRADE
-1. Double-click INSTALL_HELPER.bat.
-   It installs/updates:
-     - uvd-host.exe
-     - current yt-dlp nightly
-     - FFmpeg + ffprobe
-     - Deno (required by current yt-dlp for full YouTube extraction)
-   under:
-     %LOCALAPPDATA%\UniversalVideoDownloader
+  %LOCALAPPDATA%\UniversalVideoDownloader
 
-2. Install the Mozilla-signed extension from addons.mozilla.org when its listing
-   is available. For local development only, use Firefox -> about:debugging ->
-   This Firefox -> Load Temporary Add-on, then select extension\manifest.json.
+To update yt-dlp and Deno later, run UPDATE_BACKEND.bat. To remove the companion
+and its local logs, run UNINSTALL_HELPER.bat.
 
-If upgrading from any older build, run INSTALL_HELPER.bat again because the helper changed.
+USING THE EXTENSION
+-------------------
 
-USE
-Right-click a video -> Download video.
-The submenu is populated from formats reported by yt-dlp, such as:
-  - Best quality + audio
-  - Best compatible MP4
-  - 2160p / 1440p / 1080p / 720p / etc.
-  - Audio only
+1. Right-click a video.
+2. Open Download video with local helper.
+3. Click Scan with local helper.
+4. After the scan completes, right-click the video again and choose a quality.
 
-SAVE FOLDER
-  C:\Users\<your Windows username>\Downloads
+Available choices can include best quality with audio, compatible MP4, individual
+resolutions, and audio only. Finished files are saved in the Windows Downloads
+folder.
 
-V4.4 FIXES
-- New native-host name: v4.4 cannot accidentally connect to an older incompatible helper.
-- Removed the persistent native connection that produced "Native helper disconnected" failures.
-- Probe requests now use one-shot native messages.
-- Downloads stay inside the helper until yt-dlp/FFmpeg actually finishes, so Firefox cannot kill a spawned child after an early response.
-- The extension verifies backend_version=4.4.0 on every reply.
-- INSTALL_HELPER.bat now tests the actual Firefox length-prefixed native-messaging protocol before reporting success.
-- Keeps the v4.3 Deno, cookie, browser-impersonation, range-cleaning, and real-error improvements.
+HOW IT WORKS
+------------
 
-LOGS
-Most recent download:
+  Firefox extension
+    -> one-shot Native Messaging request
+    -> uvd-host.exe
+    -> yt-dlp and FFmpeg
+    -> Windows Downloads
+
+The native helper is necessary for segmented HLS/DASH media, separate video and
+audio tracks, format merging, and the site extractors maintained by yt-dlp.
+
+REPOSITORY LAYOUT
+-----------------
+
+  extension\       Firefox extension source and icons
+  helper-src\      Go source and tests for the native helper
+  helper\          Prebuilt Windows amd64 native helper
+  install-helper.ps1
+                   Companion installer implementation
+  INSTALL_HELPER.bat
+                   User-facing installer launcher
+  UPDATE_BACKEND.bat
+                   Updates yt-dlp and Deno
+  UNINSTALL_HELPER.bat
+                   Removes the installed companion
+  build-amo-package.ps1
+                   Builds Firefox and GitHub upload artifacts
+
+BUILDING
+--------
+
+Requirements for rebuilding the native helper:
+
+  - Go 1.23 or later
+  - Node.js 20 or later with web-ext available for Mozilla validation
+
+Build and test the Windows helper from the repository root:
+
+  cd helper-src
+  go test ./...
+  go build -trimpath -o ..\helper\uvd-host.exe .
+  cd ..
+
+Build the Firefox upload, Mozilla reviewer source, and Windows companion ZIPs:
+
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build-amo-package.ps1
+
+Generated files are written under artifacts\ and UPLOAD_READY\ and are excluded
+from Git.
+
+PRIVACY AND SECURITY BEHAVIOR
+-----------------------------
+
+- Scanning starts only after the user clicks the labeled scan command.
+- Only HTTPS page and media URLs are sent to the local helper.
+- Native-helper actions are disabled in Firefox private windows because the
+  helper keeps local troubleshooting logs.
+- The helper first tries public access. If necessary, yt-dlp may use applicable
+  cookies from the user's normal Firefox session for media the user can access.
+- No analytics, advertising, or developer-operated download server is used.
+
+Local troubleshooting logs:
+
   %LOCALAPPDATA%\UniversalVideoDownloader\last-download.log
-Most recent failed scan and its fallbacks:
   %LOCALAPPDATA%\UniversalVideoDownloader\last-probe.log
 
 LIMITS
-- DRM-protected streams are not bypassed.
-- Login/private media is only available when your Firefox session itself has access and yt-dlp can use that session.
-- Sites change. UPDATE_BACKEND.bat updates the extraction backend.
-- Firefox 142 or later is required so Firefox can display the extension's built-in data-transmission disclosure on every supported Firefox platform without compatibility warnings. The add-on itself is distributed for Windows desktop only because it requires a Windows native helper.
-- The legacy included XPI is an unsigned development artifact. The AMO upload package is generated under artifacts by build-amo-package.ps1 and must be signed by Mozilla before normal installation.
+------
+
+- DRM is not bypassed.
+- Login-gated media works only when the user already has access and yt-dlp can
+  use that Firefox session.
+- Site behavior changes over time; use UPDATE_BACKEND.bat to update yt-dlp.
+- The companion currently supports Windows amd64 only.
+
+LOCAL EXTENSION DEVELOPMENT
+---------------------------
+
+In Firefox, open about:debugging, choose This Firefox, select Load Temporary
+Add-on, and open extension\manifest.json.
